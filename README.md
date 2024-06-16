@@ -192,7 +192,7 @@ Satu restoran (restaurant) dapat menerima banyak reservasi (reservation), tetapi
 4. restaurant_table ke reservation (one to many)
 Satu meja di restoran (restaurant_table) dapat digunakan untuk banyak reservasi (reservation), tetapi setiap reservasi hanya dapat dilakukan untuk satu meja. Ini diimplementasikan melalui table_id sebagai foreign key di tabel reservation, menghubungkannya ke tabel restaurant_table.
 
-5. reservation ke payment(one to many)
+5. reservation ke payment (one to many)
 Satu reservasi (reservation) dapat memiliki banyak pembayaran (payment), tetapi setiap pembayaran hanya dapat terkait dengan satu reservasi. Ini diimplementasikan melalui reservation_id sebagai foreign key di tabel payment, menghubungkannya ke tabel reservation.
 
 ## Trigger

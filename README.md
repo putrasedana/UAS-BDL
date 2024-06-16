@@ -205,16 +205,91 @@ CREATE INDEX idx_payment_reservation_id ON payment(reservation_id);
 CREATE INDEX idx_customer_name ON customer(NAME);
 CREATE INDEX idx_customer_id ON customer(customer_id);
 ```
-Berikut ini adalah alasan kenapa index tersebut diperlukan:
+Berikut ini adalah alasan kenapa indeks tersebut diperlukan:
+
 1. idx_reservation_customer_id pada reservation(customer_id): Digunakan dalam operasi JOIN antara tabel reservation dan customer. Indeks ini akan mempercepat penggabungan data berdasarkan customer_id.
+
 2. idx_restaurant_id pada restaurant(restaurant_id): Digunakan dalam operasi JOIN antara tabel reservation dan restaurant. Indeks ini akan mempercepat penggabungan data berdasarkan restaurant_id.
+
 3. idx_table_id pada restaurant_table(table_id): Digunakan dalam operasi JOIN antara tabel reservation dan restaurant_table. Indeks ini akan mempercepat penggabungan data berdasarkan table_id.
+
 4. idx_reservation_date pada reservation(reservation_date): Digunakan untuk melakukan pencarian atau pengurutan berdasarkan tanggal reservasi (reservation_date), indeks ini akan mempercepat kinerja query yang memanfaatkan kolom ini.
+
 5. idx_reservation_time pada reservation(reservation_time): Digunakan untuk melakukan pencarian atau pengurutan berdasarkan waktu reservasi (reservation_time), indeks ini akan mempercepat kinerja query yang memanfaatkan kolom ini.
+
 6. idx_payment_reservation_id pada payment(reservation_id): Digunakan untuk menggabungkan data dari subquery yang menghitung total pembayaran (total_payment) berdasarkan reservation_id. Indeks ini akan mempercepat operasi penggabungan data antara reservation dan payment.
+
 7. idx_customer_name pada customer(name): Digunakan dalam kondisi pencarian (WHERE c.name LIKE '%John%'). Indeks ini akan mempercepat pencarian data pelanggan berdasarkan nama.
+
 8. idx_customer_id pada customer(customer_id): Digunakan dalam operasi JOIN antara tabel customer dan reservation. Indeks ini akan mempercepat penggabungan data berdasarkan customer_id.
 
 ## Trigger
+### 1. update_table_capacity_after_reservation
+Trigger ini bertujuan untuk mengurangi kapasitas meja di restoran setiap kali ada reservasi baru yang dilakukan.
+
+Detail Penjelasan:
+
+1. Trigger Definition:
+* Nama Trigger: update_table_capacity_after_reservation
+* Event yang Memicu Trigger: AFTER INSERT (Setelah ada data baru yang dimasukkan ke dalam tabel reservation)
+* Tabel yang Dipantau: reservation
+* Kapan Trigger Dijalankan: Setelah setiap baris baru dimasukkan ke dalam tabel reservation (FOR EACH ROW)
+
+2. Konteks Penggunaan:
+* Situasi: Ketika sebuah reservasi baru dibuat dan disimpan ke dalam tabel reservation.
+* Tujuan: Untuk memperbarui kapasitas dari meja restoran yang dipesan dalam reservasi tersebut dengan mengurangi jumlah orang dalam reservasi dari kapasitas awal meja.
+
+3. Prosedur yang Dilakukan:
+* Awal dan Akhir Blok Trigger:
+```sql
+BEGIN
+...
+END;
+```
+* SQL yang Dieksekusi:
+```sql
+UPDATE restaurant_table
+SET capacity = capacity - NEW.number_of_people
+WHERE table_id = NEW.table_id;
+```
+* Penjelasan Prosedur:
+    - UPDATE restaurant_table: Perintah untuk memperbarui tabel restaurant_table.
+    - SET capacity = capacity - NEW.number_of_people: Mengurangi nilai kapasitas meja dengan jumlah orang yang baru saja melakukan reservasi (NEW.number_of_people).
+    - WHERE table_id = NEW.table_id: Memastikan bahwa hanya baris di tabel restaurant_table yang memiliki table_id yang sesuai dengan table_id dari reservasi baru yang di-update.
+
+4. DELIMITER:
+* Delimiter digunakan untuk mengubah karakter yang digunakan untuk mengakhiri pernyataan SQL. Ini diperlukan karena pernyataan trigger dapat mengandung beberapa pernyataan SQL.
+* DELIMITER // mengubah karakter akhir menjadi //, memungkinkan kita untuk menulis blok kode trigger.
+* DELIMITER ; mengembalikan karakter akhir kembali ke ; setelah definisi trigger selesai.
+
+5. Kode Trigger
+```sql
+DELIMITER //
+CREATE TRIGGER update_table_capacity_after_reservation
+AFTER INSERT ON reservation
+FOR EACH ROW
+BEGIN
+    UPDATE restaurant_table
+    SET capacity = capacity - NEW.number_of_people
+    WHERE table_id = NEW.table_id;
+END;
+//
+DELIMITER ;
+```
+6. Ilustrasi
+* Sebelum Reservasi:
+    - Kapasitas meja di restaurant_table misalnya 10 orang.
+    - Tidak ada reservasi yang dilakukan pada meja tersebut.
+
+* Reservasi Baru:
+    - Pelanggan membuat reservasi untuk 4 orang pada meja dengan table_id tertentu.
+    - Data reservasi ini dimasukkan ke dalam tabel reservation.
+
+* Setelah Trigger Dijalankan:
+    - Trigger update_table_capacity_after_reservation secara otomatis dipicu.
+    - Kapasitas meja di restaurant_table diperbarui menjadi 10 - 4 = 6 orang.
+   
+7. Kesimpulan
+Trigger update_table_capacity_after_reservation memastikan bahwa kapasitas meja di restoran selalu diperbarui setiap kali ada reservasi baru yang masuk, membantu mengelola jumlah orang yang dapat ditampung oleh masing-masing meja secara akurat.
 
 ## View

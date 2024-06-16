@@ -1,8 +1,5 @@
 # Sistem Reservasi Restoran
 
-## Entity Relationship Diagram
-![ERD Diagram](entity_relationship_diagram.png)
-
 ## Deskripsi Project
 ### Latar Belakang
 Dalam era digital saat ini, manajemen reservasi restoran yang efisien sangat penting untuk memastikan kepuasan pelanggan dan optimalisasi operasi bisnis. Proyek ini bertujuan untuk mengembangkan sebuah sistem basis data untuk manajemen reservasi restoran yang mencakup pelanggan, restoran, meja, reservasi, dan pembayaran.
@@ -27,6 +24,25 @@ Sistem ini akan mencakup komponen-komponen berikut:
 3. Indexing: Digunakan untuk mempercepat query
 4. View: Digunakan untuk menyederhanakan query yang kompleks
 5. Trigger: Digunakan untuk otomatisasi perhitungan total pembayaran
+
+## Entity Relationship Diagram
+![ERD Diagram](entity_relationship_diagram.png)
+
+## Relasi
+1. customer ke reservation (one to many)
+Satu pelanggan (customer) dapat membuat banyak reservasi (reservation), tetapi setiap reservasi hanya dapat dibuat oleh satu pelanggan. Ini diimplementasikan melalui customer_id sebagai foreign key di tabel reservation, menghubungkannya ke tabel customer.
+
+2. restaurant ke restaurant_table (one to many)
+Satu restoran (restaurant) dapat memiliki banyak meja (restaurant_table), tetapi setiap meja hanya dapat dimiliki oleh satu restoran. Ini diimplementasikan melalui restaurant_id sebagai foreign key di tabel restaurant_table, menghubungkannya ke tabel restaurant.
+
+3. restaurant ke reservation (one to many)
+Satu restoran (restaurant) dapat menerima banyak reservasi (reservation), tetapi setiap reservasi hanya dapat dilakukan di satu restoran. Ini diimplementasikan melalui restaurant_id sebagai foreign key di tabel reservation, menghubungkannya ke tabel restaurant.
+
+4. restaurant_table ke reservation (one to many)
+Satu meja di restoran (restaurant_table) dapat digunakan untuk banyak reservasi (reservation), tetapi setiap reservasi hanya dapat dilakukan untuk satu meja. Ini diimplementasikan melalui table_id sebagai foreign key di tabel reservation, menghubungkannya ke tabel restaurant_table.
+
+5. reservation ke payment (one to many)
+Satu reservasi (reservation) dapat memiliki banyak pembayaran (payment), tetapi setiap pembayaran hanya dapat terkait dengan satu reservasi. Ini diimplementasikan melalui reservation_id sebagai foreign key di tabel payment, menghubungkannya ke tabel reservation.
 
 ## Skema Basis Data
 ```sql
@@ -178,22 +194,6 @@ GROUP BY
 HAVING
     COUNT(r.reservation_id) > 1;
 ```
-
-## Relasi
-1. customer ke reservation (one to many)
-Satu pelanggan (customer) dapat membuat banyak reservasi (reservation), tetapi setiap reservasi hanya dapat dibuat oleh satu pelanggan. Ini diimplementasikan melalui customer_id sebagai foreign key di tabel reservation, menghubungkannya ke tabel customer.
-
-2. restaurant ke restaurant_table (one to many)
-Satu restoran (restaurant) dapat memiliki banyak meja (restaurant_table), tetapi setiap meja hanya dapat dimiliki oleh satu restoran. Ini diimplementasikan melalui restaurant_id sebagai foreign key di tabel restaurant_table, menghubungkannya ke tabel restaurant.
-
-3. restaurant ke reservation (one to many)
-Satu restoran (restaurant) dapat menerima banyak reservasi (reservation), tetapi setiap reservasi hanya dapat dilakukan di satu restoran. Ini diimplementasikan melalui restaurant_id sebagai foreign key di tabel reservation, menghubungkannya ke tabel restaurant.
-
-4. restaurant_table ke reservation (one to many)
-Satu meja di restoran (restaurant_table) dapat digunakan untuk banyak reservasi (reservation), tetapi setiap reservasi hanya dapat dilakukan untuk satu meja. Ini diimplementasikan melalui table_id sebagai foreign key di tabel reservation, menghubungkannya ke tabel restaurant_table.
-
-5. reservation ke payment (one to many)
-Satu reservasi (reservation) dapat memiliki banyak pembayaran (payment), tetapi setiap pembayaran hanya dapat terkait dengan satu reservasi. Ini diimplementasikan melalui reservation_id sebagai foreign key di tabel payment, menghubungkannya ke tabel reservation.
 
 ## Trigger
 

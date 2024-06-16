@@ -194,6 +194,26 @@ GROUP BY
 HAVING
     COUNT(r.reservation_id) > 1;
 ```
+## Index
+```sql
+CREATE INDEX idx_reservation_customer_id ON reservation(customer_id);
+CREATE INDEX idx_restaurant_id ON restaurant(restaurant_id);
+CREATE INDEX idx_table_id ON restaurant_table(table_id);
+CREATE INDEX idx_reservation_date ON reservation(reservation_date);
+CREATE INDEX idx_reservation_time ON reservation(reservation_time);
+CREATE INDEX idx_payment_reservation_id ON payment(reservation_id);
+CREATE INDEX idx_customer_name ON customer(NAME);
+CREATE INDEX idx_customer_id ON customer(customer_id);
+```
+Berikut ini adalah alasan kenapa index tersebut diperlukan:
+1. idx_reservation_customer_id pada reservation(customer_id): Digunakan dalam operasi JOIN antara tabel reservation dan customer. Indeks ini akan mempercepat penggabungan data berdasarkan customer_id.
+2. idx_restaurant_id pada restaurant(restaurant_id): Digunakan dalam operasi JOIN antara tabel reservation dan restaurant. Indeks ini akan mempercepat penggabungan data berdasarkan restaurant_id.
+3. idx_table_id pada restaurant_table(table_id): Digunakan dalam operasi JOIN antara tabel reservation dan restaurant_table. Indeks ini akan mempercepat penggabungan data berdasarkan table_id.
+4. idx_reservation_date pada reservation(reservation_date): Digunakan untuk melakukan pencarian atau pengurutan berdasarkan tanggal reservasi (reservation_date), indeks ini akan mempercepat kinerja query yang memanfaatkan kolom ini.
+5. idx_reservation_time pada reservation(reservation_time): Digunakan untuk melakukan pencarian atau pengurutan berdasarkan waktu reservasi (reservation_time), indeks ini akan mempercepat kinerja query yang memanfaatkan kolom ini.
+6. idx_payment_reservation_id pada payment(reservation_id): Digunakan untuk menggabungkan data dari subquery yang menghitung total pembayaran (total_payment) berdasarkan reservation_id. Indeks ini akan mempercepat operasi penggabungan data antara reservation dan payment.
+7. idx_customer_name pada customer(name): Digunakan dalam kondisi pencarian (WHERE c.name LIKE '%John%'). Indeks ini akan mempercepat pencarian data pelanggan berdasarkan nama.
+8. idx_customer_id pada customer(customer_id): Digunakan dalam operasi JOIN antara tabel customer dan reservation. Indeks ini akan mempercepat penggabungan data berdasarkan customer_id.
 
 ## Trigger
 

@@ -224,7 +224,7 @@ Berikut ini adalah alasan kenapa indeks tersebut diperlukan:
 8. idx_customer_id pada customer(customer_id): Digunakan dalam operasi JOIN antara tabel customer dan reservation. Indeks ini akan mempercepat penggabungan data berdasarkan customer_id.
 
 ## TRIGGER
-### 1. update_table_capacity_after_reservation
+### 1. TRIGGER: update_table_capacity_after_reservation
 Trigger ini bertujuan untuk mengurangi kapasitas meja di restoran setiap kali ada reservasi baru yang dilakukan.
 
 Detail Penjelasan:
@@ -293,7 +293,7 @@ DELIMITER ;
 7. Kesimpulan
 * Trigger update_table_capacity_after_reservation memastikan bahwa kapasitas meja di restoran selalu diperbarui setiap kali ada reservasi baru yang masuk, membantu mengelola jumlah orang yang dapat ditampung oleh masing-masing meja secara akurat.
 
-### 2. update_total_payments_after_insert
+### 2. TRIGGER: update_total_payments_after_insert
 Trigger ini bertujuan untuk memperbarui total pembayaran untuk reservasi tertentu setiap kali ada pembayaran baru yang ditambahkan.
 
 Detail Penjelasan:
@@ -378,7 +378,7 @@ DELIMITER ;
 * Trigger update_total_payments_after_insert memastikan bahwa setiap kali pembayaran baru ditambahkan ke tabel payment, total pembayaran untuk reservasi terkait dihitung ulang dan diperbarui dalam tabel reservation. Ini membantu menjaga data total pembayaran tetap akurat dan terkini tanpa memerlukan intervensi manual.
 
 ## VIEW
-### 1. reservation_details
+### 1. VIEW: reservation_details
 View ini bertujuan untuk menyajikan informasi lengkap tentang reservasi, termasuk detail pelanggan, restoran, dan meja yang dipesan.
 
 Detail Penjelasan:
@@ -464,4 +464,186 @@ SELECT * FROM reservation_details;
 
 8. Kesimpulan
 * View reservation_details menyederhanakan akses ke data reservasi dengan menggabungkan informasi yang relevan dari beberapa tabel ke dalam satu tampilan. Ini membuat query lebih sederhana, lebih mudah dibaca, dan mengurangi redundansi dalam menulis query yang kompleks. View ini sangat berguna dalam aplikasi yang sering membutuhkan informasi lengkap tentang reservasi.
+
+### 2. VIEW: reservation_payment_details
+View ini bertujuan untuk menyajikan informasi lengkap tentang reservasi, termasuk detail pelanggan, restoran, meja yang dipesan, serta total pembayaran yang telah dilakukan untuk setiap reservasi.
+
+Detail Penjelasan:
+1. Nama View:
+* reservation_payment_details: Nama view yang mendeskripsikan bahwa view ini berisi detail terkait reservasi beserta informasi pembayaran.
+
+2. Tujuan View:
+* Menggabungkan Data: Menggabungkan informasi dari beberapa tabel (reservation, customer, restaurant, restaurant_table, dan payment) untuk menampilkan detail reservasi dan total pembayaran dalam satu tampilan.
+* Menyederhanakan Query: Memberikan cara yang lebih sederhana untuk mengakses data yang tersebar di beberapa tabel tanpa harus melakukan join dan agregasi secara manual setiap kali membutuhkan informasi tersebut.
+
+3. Tabel-tabel yang Digunakan:
+* reservation (r): Tabel utama yang berisi informasi tentang reservasi.
+* customer (c): Tabel yang berisi informasi tentang pelanggan yang melakukan reservasi.
+* restaurant (rest): Tabel yang berisi informasi tentang restoran tempat reservasi dilakukan.
+* restaurant_table (rt): Tabel yang berisi informasi tentang meja di restoran.
+* payment (p): Tabel yang berisi informasi tentang pembayaran yang dilakukan untuk reservasi.
+
+4. Kolom-kolom yang Dipilih:
+* r.reservation_id: ID unik dari reservasi.
+* c.name AS customer_name: Nama pelanggan yang melakukan reservasi.
+* rest.name AS restaurant_name: Nama restoran tempat reservasi dilakukan.
+* rt.table_number: Nomor meja yang dipesan.
+* r.reservation_date: Tanggal reservasi.
+* r.reservation_time: Waktu reservasi.
+* r.number_of_people: Jumlah orang dalam reservasi.
+* p.total_payment: Total pembayaran yang telah dilakukan untuk reservasi tersebut.
+
+5. Join Operation:
+* JOIN customer (c) ON r.customer_id = c.customer_id:
+    * Menggabungkan tabel reservation dengan customer berdasarkan customer_id.
+* JOIN restaurant (rest) ON r.restaurant_id = rest.restaurant_id:
+    * Menggabungkan tabel reservation dengan restaurant berdasarkan restaurant_id.
+* JOIN restaurant_table (rt) ON r.table_id = rt.table_id:
+    * Menggabungkan tabel reservation dengan restaurant_table berdasarkan table_id.
+* LEFT JOIN Subquery p ON r.reservation_id = p.reservation_id:
+    * Menggabungkan tabel reservation dengan subquery p yang menghitung total pembayaran berdasarkan reservation_id.
+
+6. Subquery untuk Total Pembayaran:
+* Subquery menghitung total pembayaran untuk setiap reservasi:
+```sql
+(SELECT reservation_id, SUM(amount) AS total_payment
+ FROM payment
+ GROUP BY reservation_id)
+```
+* SELECT reservation_id, SUM(amount) AS total_payment: Memilih reservation_id dan menghitung total pembayaran (SUM(amount)) untuk setiap reservasi.
+* FROM payment: Dari tabel payment.
+* GROUP BY reservation_id: Mengelompokkan berdasarkan reservation_id.
+
+7. Kode View:
+```sql
+CREATE VIEW reservation_payment_details AS
+SELECT
+    r.reservation_id,
+    c.name AS customer_name,
+    rest.name AS restaurant_name,
+    rt.table_number,
+    r.reservation_date,
+    r.reservation_time,
+    r.number_of_people,
+    p.total_payment
+FROM
+    reservation r
+JOIN
+    customer c ON r.customer_id = c.customer_id
+JOIN
+    restaurant rest ON r.restaurant_id = rest.restaurant_id
+JOIN
+    restaurant_table rt ON r.table_id = rt.table_id
+LEFT JOIN
+    (SELECT reservation_id, SUM(amount) AS total_payment
+     FROM payment
+     GROUP BY reservation_id) p ON r.reservation_id = p.reservation_id;
+```
+
+8. Ilustrasi Penggunaan
+* Sebelum Menggunakan View:
+```sql
+SELECT
+    r.reservation_id,
+    c.name AS customer_name,
+    rest.name AS restaurant_name,
+    rt.table_number,
+    r.reservation_date,
+    r.reservation_time,
+    r.number_of_people,
+    (SELECT SUM(amount) FROM payment WHERE reservation_id = r.reservation_id) AS total_payment
+FROM
+    reservation r
+JOIN
+    customer c ON r.customer_id = c.customer_id
+JOIN
+    restaurant rest ON r.restaurant_id = rest.restaurant_id
+JOIN
+    restaurant_table rt ON r.table_id = rt.table_id;
+```
+* Setelah Menggunakan View:
+```sql
+SELECT * FROM reservation_payment_details;
+```
+
+9. Kesimpulan
+* View reservation_payment_details menyederhanakan akses ke data reservasi dan pembayaran dengan menggabungkan informasi yang relevan dari beberapa tabel dan subquery ke dalam satu tampilan. Ini membuat query lebih sederhana, lebih mudah dibaca, dan mengurangi redundansi dalam menulis query yang kompleks. View ini sangat berguna dalam aplikasi yang sering membutuhkan informasi lengkap tentang reservasi dan total pembayaran.
+
+### 3. VIEW: customers_with_multiple_reservations
+View ini bertujuan untuk menyajikan informasi tentang pelanggan yang memiliki lebih dari satu reservasi, khususnya pelanggan yang namanya mengandung kata "John".
+
+Detail Penjelasan:
+1. Nama View:
+* customers_with_multiple_reservations: Nama view yang mendeskripsikan bahwa view ini berisi informasi tentang pelanggan dengan lebih dari satu reservasi.
+
+2. Tujuan View:
+* Mengidentifikasi Pelanggan Aktif: Memberikan informasi tentang pelanggan yang sering melakukan reservasi, yang dapat berguna untuk analisis dan pemasaran.
+* Filter Berdasarkan Nama: Fokus pada pelanggan yang namanya mengandung kata "John".
+* Menyederhanakan Query: Menyediakan cara yang lebih sederhana untuk mendapatkan daftar pelanggan yang memenuhi kriteria tersebut tanpa harus menulis query kompleks berulang kali.
+
+3. Tabel-tabel yang Digunakan:
+* customer (c): Tabel yang berisi informasi tentang pelanggan.
+* reservation (r): Tabel yang berisi informasi tentang reservasi yang dilakukan oleh pelanggan.
+
+4. Kolom-kolom yang Dipilih:
+* c.customer_id: ID unik dari pelanggan.
+* c.name AS customer_name: Nama pelanggan.
+* COUNT(r.reservation_id) AS total_reservations: Total jumlah reservasi yang dilakukan oleh pelanggan.
+
+5. Join Operation:
+* LEFT JOIN reservation (r) ON c.customer_id = r.customer_id
+    * Menggabungkan tabel customer dengan reservation berdasarkan customer_id, menggunakan LEFT JOIN untuk memastikan semua pelanggan tercakup, termasuk yang tidak memiliki reservasi.
+
+6. Filtering dan Grouping:
+* WHERE c.name LIKE '%John%'
+    * Menyaring pelanggan yang namanya mengandung kata "John".
+* GROUP BY c.customer_id, c.name
+    * Mengelompokkan hasil berdasarkan customer_id dan name untuk menghitung jumlah reservasi per pelanggan.
+* HAVING COUNT(r.reservation_id) > 1
+    * Memfilter hasil untuk hanya menyertakan pelanggan yang memiliki lebih dari satu reservasi.
+
+7. Kode View:
+```sql
+CREATE VIEW customers_with_multiple_reservations AS
+SELECT
+    c.customer_id,
+    c.name AS customer_name,
+    COUNT(r.reservation_id) AS total_reservations
+FROM
+    customer c
+LEFT JOIN
+    reservation r ON c.customer_id = r.customer_id
+WHERE
+    c.name LIKE '%John%'
+GROUP BY
+    c.customer_id, c.name
+HAVING
+    COUNT(r.reservation_id) > 1;
+```
+
+8. Ilustrasi Penggunaan
+* Sebelum Menggunakan View:
+```sql
+SELECT
+    c.customer_id,
+    c.name AS customer_name,
+    COUNT(r.reservation_id) AS total_reservations
+FROM
+    customer c
+LEFT JOIN
+    reservation r ON c.customer_id = r.customer_id
+WHERE
+    c.name LIKE '%John%'
+GROUP BY
+    c.customer_id, c.name
+HAVING
+    COUNT(r.reservation_id) > 1;
+```
+* Setelah Menggunakan View:
+```sql
+SELECT * FROM customers_with_multiple_reservations;
+```
+
+9. Kesimpulan
+* View customers_with_multiple_reservations menyederhanakan akses ke data pelanggan yang memiliki lebih dari satu reservasi dan namanya mengandung "John". Ini membuat query lebih sederhana, lebih mudah dibaca, dan mengurangi redundansi dalam menulis query yang kompleks. View ini sangat berguna dalam analisis data pelanggan dan dapat digunakan untuk mengidentifikasi pelanggan aktif untuk tujuan pemasaran dan layanan pelanggan.
 

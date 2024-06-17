@@ -253,9 +253,10 @@ SET capacity = capacity - NEW.number_of_people
 WHERE table_id = NEW.table_id;
 ```
 * Penjelasan Prosedur:
-    - UPDATE restaurant_table: Perintah untuk memperbarui tabel restaurant_table.
-    - SET capacity = capacity - NEW.number_of_people: Mengurangi nilai kapasitas meja dengan jumlah orang yang baru saja melakukan reservasi (NEW.number_of_people).
-    - WHERE table_id = NEW.table_id: Memastikan bahwa hanya baris di tabel restaurant_table yang memiliki table_id yang sesuai dengan table_id dari reservasi baru yang di-update.
+  
+    * UPDATE restaurant_table: Perintah untuk memperbarui tabel restaurant_table.
+    * SET capacity = capacity - NEW.number_of_people: Mengurangi nilai kapasitas meja dengan jumlah orang yang baru saja melakukan reservasi (NEW.number_of_people).
+    * WHERE table_id = NEW.table_id: Memastikan bahwa hanya baris di tabel restaurant_table yang memiliki table_id yang sesuai dengan table_id dari reservasi baru yang di-update.
 
 4. DELIMITER:
 * Delimiter digunakan untuk mengubah karakter yang digunakan untuk mengakhiri pernyataan SQL. Ini diperlukan karena pernyataan trigger dapat mengandung beberapa pernyataan SQL.
@@ -290,6 +291,90 @@ DELIMITER ;
     - Kapasitas meja di restaurant_table diperbarui menjadi 10 - 4 = 6 orang.
    
 7. Kesimpulan
-Trigger update_table_capacity_after_reservation memastikan bahwa kapasitas meja di restoran selalu diperbarui setiap kali ada reservasi baru yang masuk, membantu mengelola jumlah orang yang dapat ditampung oleh masing-masing meja secara akurat.
+* Trigger update_table_capacity_after_reservation memastikan bahwa kapasitas meja di restoran selalu diperbarui setiap kali ada reservasi baru yang masuk, membantu mengelola jumlah orang yang dapat ditampung oleh masing-masing meja secara akurat.
+
+### 2. update_total_payments_after_insert
+Trigger ini bertujuan untuk memperbarui total pembayaran untuk reservasi tertentu setiap kali ada pembayaran baru yang ditambahkan.
+
+Detail Penjelasan:
+1. Trigger Definition:
+* Nama Trigger: update_total_payments_after_insert
+* Event yang Memicu Trigger: AFTER INSERT (Setelah ada data baru yang dimasukkan ke dalam tabel payment)
+* Tabel yang Dipantau: payment
+* Kapan Trigger Dijalankan: Setelah setiap baris baru dimasukkan ke dalam tabel payment (FOR EACH ROW)
+
+2. Konteks Penggunaan:
+* Situasi: Ketika sebuah pembayaran baru ditambahkan ke tabel payment.
+* Tujuan: Untuk menghitung ulang total pembayaran untuk reservasi tertentu dan memperbarui kolom total_payment di tabel reservation.
+
+3. Prosedur yang Dilakukan:
+* Awal dan Akhir Blok Trigger:
+```sql
+BEGIN
+...
+END;
+```
+* Deklarasi Variabel:
+```sql
+DECLARE total DECIMAL(10, 2);
+```
+Mendeklarasikan variabel total untuk menyimpan total pembayaran yang dihitung.
+
+* Penghitungan Total Pembayaran:
+```sql
+SELECT SUM(amount) INTO total
+FROM payment
+WHERE reservation_id = NEW.reservation_id;
+```
+SELECT SUM(amount) INTO total: Menghitung jumlah semua pembayaran (SUM(amount)) untuk reservation_id yang sama dengan reservasi baru yang dimasukkan (NEW.reservation_id), dan menyimpannya dalam variabel total.
+
+* Memperbarui Tabel Reservation:
+```sql
+UPDATE reservation
+SET total_payment = total
+WHERE reservation_id = NEW.reservation_id;
+```
+UPDATE reservation: Memperbarui tabel reservation.
+SET total_payment = total: Menetapkan nilai total_payment ke hasil perhitungan total yang baru (total).
+WHERE reservation_id = NEW.reservation_id: Memastikan bahwa hanya baris dengan reservation_id yang sesuai dengan reservasi baru yang di-update.
+
+4. DELIMITER:
+* Delimiter digunakan untuk mengubah karakter yang digunakan untuk mengakhiri pernyataan SQL. Ini diperlukan karena pernyataan trigger dapat mengandung beberapa pernyataan SQL.
+* DELIMITER // mengubah karakter akhir menjadi //, memungkinkan kita untuk menulis blok kode trigger.
+* DELIMITER ; mengembalikan karakter akhir kembali ke ; setelah definisi trigger selesai.
+
+5. Kode Trigger:
+```sql
+DELIMITER //
+CREATE TRIGGER update_total_payments_after_insert
+AFTER INSERT ON payment
+FOR EACH ROW
+BEGIN
+    DECLARE total DECIMAL(10, 2);
+    
+    SELECT SUM(amount) INTO total
+    FROM payment
+    WHERE reservation_id = NEW.reservation_id;
+    
+    UPDATE reservation
+    SET total_payment = total
+    WHERE reservation_id = NEW.reservation_id;
+END;
+//
+DELIMITER ;
+```
+6. Ilustrasi
+* Sebelum Pembayaran Baru:
+    * total_payment untuk reservasi tertentu dalam tabel reservation adalah sejumlah tertentu.
+    * Tidak ada pembayaran baru yang ditambahkan ke tabel payment.
+* Pembayaran Baru:
+    * Pembayaran baru dimasukkan ke tabel payment dengan amount tertentu dan reservation_id tertentu.
+* Setelah Trigger Dijalankan:
+    * Trigger update_total_payments_after_insert secara otomatis dipicu.
+    * Sistem menghitung jumlah semua pembayaran untuk reservation_id yang terkait.
+    * Kolom total_payment dalam tabel reservation diperbarui dengan nilai baru yang mencerminkan total semua pembayaran untuk reservasi tersebut.
+  
+7. Kesimpulan
+* Trigger update_total_payments_after_insert memastikan bahwa setiap kali pembayaran baru ditambahkan ke tabel payment, total pembayaran untuk reservasi terkait dihitung ulang dan diperbarui dalam tabel reservation. Ini membantu menjaga data total pembayaran tetap akurat dan terkini tanpa memerlukan intervensi manual.
 
 ## View

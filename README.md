@@ -194,7 +194,7 @@ GROUP BY
 HAVING
     COUNT(r.reservation_id) > 1;
 ```
-## Index
+## INDEX
 ```sql
 CREATE INDEX idx_reservation_customer_id ON reservation(customer_id);
 CREATE INDEX idx_restaurant_id ON restaurant(restaurant_id);
@@ -223,7 +223,7 @@ Berikut ini adalah alasan kenapa indeks tersebut diperlukan:
 
 8. idx_customer_id pada customer(customer_id): Digunakan dalam operasi JOIN antara tabel customer dan reservation. Indeks ini akan mempercepat penggabungan data berdasarkan customer_id.
 
-## Trigger
+## TRIGGER
 ### 1. update_table_capacity_after_reservation
 Trigger ini bertujuan untuk mengurangi kapasitas meja di restoran setiap kali ada reservasi baru yang dilakukan.
 
@@ -377,4 +377,91 @@ DELIMITER ;
 7. Kesimpulan
 * Trigger update_total_payments_after_insert memastikan bahwa setiap kali pembayaran baru ditambahkan ke tabel payment, total pembayaran untuk reservasi terkait dihitung ulang dan diperbarui dalam tabel reservation. Ini membantu menjaga data total pembayaran tetap akurat dan terkini tanpa memerlukan intervensi manual.
 
-## View
+## VIEW
+### 1. reservation_details
+View ini bertujuan untuk menyajikan informasi lengkap tentang reservasi, termasuk detail pelanggan, restoran, dan meja yang dipesan.
+
+Detail Penjelasan:
+
+1. Nama View:
+* reservation_details: Nama view yang mendeskripsikan bahwa view ini berisi detail terkait reservasi.
+
+2. Tujuan View:
+* Menggabungkan Data: Menggabungkan informasi dari beberapa tabel (reservation, customer, restaurant, dan restaurant_table) untuk menampilkan detail reservasi dalam satu tampilan.
+* Menyederhanakan Query: Memberikan cara yang lebih sederhana untuk mengakses data yang tersebar di beberapa tabel tanpa harus melakukan join secara manual setiap kali membutuhkan informasi tersebut.
+
+3. Tabel-tabel yang Digunakan:
+* reservation (r): Tabel utama yang berisi informasi tentang reservasi.
+* customer (c): Tabel yang berisi informasi tentang pelanggan yang melakukan reservasi.
+* restaurant (rest): Tabel yang berisi informasi tentang restoran tempat reservasi dilakukan.
+* restaurant_table (rt): Tabel yang berisi informasi tentang meja di restoran.
+
+4. Kolom-kolom yang Dipilih:
+* r.reservation_id: ID unik dari reservasi.
+* c.name AS customer_name: Nama pelanggan yang melakukan reservasi.
+* c.email AS customer_email: Email pelanggan yang melakukan reservasi.
+* rest.name AS restaurant_name: Nama restoran tempat reservasi dilakukan.
+* rt.table_number: Nomor meja yang dipesan.
+* r.reservation_date: Tanggal reservasi.
+* r.reservation_time: Waktu reservasi.
+* r.number_of_people: Jumlah orang dalam reservasi.
+
+5. Join Operation:
+* JOIN customer (c) ON r.customer_id = c.customer_id:
+    * Menggabungkan tabel reservation dengan customer berdasarkan customer_id.
+* JOIN restaurant (rest) ON r.restaurant_id = rest.restaurant_id:
+    * Menggabungkan tabel reservation dengan restaurant berdasarkan restaurant_id.
+* JOIN restaurant_table (rt) ON r.table_id = rt.table_id:
+    * Menggabungkan tabel reservation dengan restaurant_table berdasarkan table_id.
+
+6. Kode View:
+```sql
+CREATE VIEW reservation_details AS
+SELECT
+    r.reservation_id,
+    c.name AS customer_name,
+    c.email AS customer_email,
+    rest.name AS restaurant_name,
+    rt.table_number,
+    r.reservation_date,
+    r.reservation_time,
+    r.number_of_people
+FROM
+    reservation r
+JOIN
+    customer c ON r.customer_id = c.customer_id
+JOIN
+    restaurant rest ON r.restaurant_id = rest.restaurant_id
+JOIN
+    restaurant_table rt ON r.table_id = rt.table_id;
+```
+
+7. Ilustrasi Penggunaan
+* Sebelum Menggunakan View:
+```sql
+SELECT
+    r.reservation_id,
+    c.name AS customer_name,
+    c.email AS customer_email,
+    rest.name AS restaurant_name,
+    rt.table_number,
+    r.reservation_date,
+    r.reservation_time,
+    r.number_of_people
+FROM
+    reservation r
+JOIN
+    customer c ON r.customer_id = c.customer_id
+JOIN
+    restaurant rest ON r.restaurant_id = rest.restaurant_id
+JOIN
+    restaurant_table rt ON r.table_id = rt.table_id;
+```
+* Setelah Menggunakan View:
+```sql
+SELECT * FROM reservation_details;
+```
+
+8. Kesimpulan
+* View reservation_details menyederhanakan akses ke data reservasi dengan menggabungkan informasi yang relevan dari beberapa tabel ke dalam satu tampilan. Ini membuat query lebih sederhana, lebih mudah dibaca, dan mengurangi redundansi dalam menulis query yang kompleks. View ini sangat berguna dalam aplikasi yang sering membutuhkan informasi lengkap tentang reservasi.
+

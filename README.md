@@ -205,7 +205,7 @@ CREATE INDEX idx_payment_reservation_id ON payment(reservation_id);
 CREATE INDEX idx_customer_name ON customer(NAME);
 CREATE INDEX idx_customer_id ON customer(customer_id);
 ```
-Berikut ini adalah alasan kenapa indeks tersebut diperlukan:
+Berikut ini adalah alasan indeks tersebut diperlukan:
 
 1. idx_reservation_customer_id pada reservation(customer_id): Digunakan dalam operasi JOIN antara tabel reservation dan customer. Indeks ini akan mempercepat penggabungan data berdasarkan customer_id.
 
